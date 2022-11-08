@@ -164,7 +164,7 @@ td::Result<std::string> stack2json(vm::Ref<vm::Stack> stack) {
 
 td::Result<std::string> run_vm(td::Ref<vm::Cell> code, td::Ref<vm::Cell> data, td::JsonArray &stack_array,
                                td::JsonObject &c7_register, int function_selector,
-                               std::function<std::string()> getLogs) {
+                               std::function<std::string()> getLogs, vm::GasLimits gas) {
   vm::init_op_cp0(true);
 
   TRY_RESULT(stack, json_to_stack(stack_array));
@@ -173,8 +173,6 @@ td::Result<std::string> run_vm(td::Ref<vm::Cell> code, td::Ref<vm::Cell> data, t
   td::int64 method_id = function_selector;
   stack.write().push_smallint(method_id);
 
-  long long gas_limit = vm::GasLimits::infty;
-  vm::GasLimits gas{gas_limit};
   LOG(DEBUG) << "creating VM";
   vm::VmState vm{std::move(code), std::move(stack), gas, 1, data, vm::VmLog()};
 
@@ -252,6 +250,22 @@ td::Result<std::string> vm_exec_from_config(std::string config, std::function<st
   TRY_RESULT(initial_stack, td::get_json_object_field(obj, "init_stack", td::JsonValue::Type::Array, false));
   TRY_RESULT(c7_register, td::get_json_object_field(obj, "c7_register", td::JsonValue::Type::Object, false));
 
+  TRY_RESULT(gas_limit, td::get_json_object_long_field(obj, "gas_limit", false));
+  TRY_RESULT(gas_max, td::get_json_object_long_field(obj, "gas_max", false));
+  TRY_RESULT(gas_credit, td::get_json_object_long_field(obj, "gas_credit", false));
+
+  if (gas_limit < 0) {
+    gas_limit = vm::GasLimits::infty;
+  }
+  if (gas_max < 0) {
+    gas_max = vm::GasLimits::infty;
+  }
+  if (gas_credit < 0) {
+    gas_credit = 0;
+  }
+
+  vm::GasLimits gas(gas_limit, gas_max, gas_credit);
+
   auto &initial_stack_array = initial_stack.get_array();
 
   TRY_RESULT(data_bytes, td::base64_decode(data));
@@ -263,5 +277,5 @@ td::Result<std::string> vm_exec_from_config(std::string config, std::function<st
   TRY_RESULT(code_cell, code_boc->load_cell());
 
   return run_vm(code_cell.data_cell, data_cell.data_cell, initial_stack_array, c7_register.get_object(),
-                function_selector, getLogs);
+                function_selector, getLogs, gas);
 }
