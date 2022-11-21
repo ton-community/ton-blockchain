@@ -11,8 +11,6 @@ extern "C" char *vm_exec(int len, char *_data) {
   // Init logging
   td::log_interface = memLog;
   SET_VERBOSITY_LEVEL(verbosity_DEBUG);
-//  SET_VERBOSITY_LEVEL(verbosity_ERROR);
-  memLog->clear();
 
   std::string config(_data, len);
 

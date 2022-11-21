@@ -15,25 +15,18 @@ class StringLog : public td::LogInterface {
   }
 
   void append(td::CSlice new_slice, int log_level) override {
-    lock.lock();
-    this->str.append(new_slice.str());
-    lock.unlock();
+    str.append(new_slice.str());
   }
 
   void rotate() override {
   }
 
-  void clear() {
-    this->str.clear();
-  }
-
   std::string get_string() const {
-    return this->str;
+    return str;
   }
 
  private:
   std::string str;
-  std::mutex lock;
 };
 
 #endif  //TON_STRINGLOG_H
