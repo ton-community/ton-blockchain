@@ -351,6 +351,7 @@ if (USE_EMSCRIPTEN)
   target_link_options(vm-exec PRIVATE -sEXPORT_NAME=VmExecModule)
   target_link_options(vm-exec PRIVATE -sENVIRONMENT=web)
   target_link_options(vm-exec PRIVATE -fexceptions)
+  target_link_options(vm-exec PRIVATE -sALLOW_MEMORY_GROWTH=1)
   target_compile_options(vm-exec PRIVATE -fexceptions)
 endif()
 
